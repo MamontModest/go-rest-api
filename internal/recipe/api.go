@@ -15,8 +15,8 @@ func RegisterHandlers(r *routing.RouteGroup, service Service, logger *log.Logger
 	r.Get("/recipe", res.getAll)
 
 	// the following endpoints require a valid BasicAuth
-	r.Post("/recipe", res.create)
 	r.Put("/recipe/<id>", res.update)
+	r.Post("/recipe", res.create)
 	r.Delete("/recipe/<id>", res.delete)
 }
 
@@ -63,12 +63,11 @@ func (r *resource) update(c *routing.Context) error {
 		return c.WriteWithStatus(BadRequestResponse{}, http.StatusBadRequest)
 	}
 	recipeId, err := strconv.Atoi(c.Param("id"))
-	noContent, err := r.service.Update(c.Request.Context(), recipeId, input)
+	_, err = r.service.Update(c.Request.Context(), recipeId, input)
 	if err != nil {
 		return c.WriteWithStatus(BadRequestResponse{}, http.StatusBadRequest)
 	}
-
-	return c.WriteWithStatus(noContent, http.StatusNoContent)
+	return nil
 }
 
 func (r *resource) delete(c *routing.Context) error {

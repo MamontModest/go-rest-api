@@ -3,7 +3,6 @@ package recipe
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/mamontmodest/go-rest-api/internal/entity"
 	"github.com/mamontmodest/go-rest-api/pkg/db"
 	errs "github.com/mamontmodest/go-rest-api/pkg/errors"
@@ -38,8 +37,81 @@ func NewRepository(db *db.SDatabase, logger *log.Logger) Repository {
 
 // GetRecipes returns the list of recipes recordset in the database.
 func (r repository) GetRecipes(ctx context.Context) (entity.RecipesList, error) {
-	recipe := new(entity.RecipesList)
-	return *recipe, nil
+	recipes := new(entity.RecipesList)
+	conn, err := r.db.ConnWith(ctx)
+	if err != nil {
+		return *recipes, err
+	}
+	defer conn.Close()
+	ct, cancel := context.WithTimeout(ctx, time.Second*1)
+	defer cancel()
+	resp := make(chan ChanRecipesList)
+	go func() {
+		//select all tables and creates maps for data structs
+		IngredientMap := make(map[int][]*entity.Ingredient)
+		StepsMap := make(map[int][]*entity.Step)
+		tx, err := conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+		defer tx.Rollback()
+		query := "Select recipeId, ingredient  from ingredient where True"
+		rows, err := tx.Query(query)
+		if err != nil {
+			resp <- ChanRecipesList{*recipes, err}
+			return
+		}
+		for rows.Next() {
+			ingredient := new(entity.Ingredient)
+			recipeId := 0
+			err := rows.Scan(&recipeId, &ingredient.Name)
+			if err != nil {
+				resp <- ChanRecipesList{*recipes, err}
+				return
+			}
+			IngredientMap[recipeId] = append(IngredientMap[recipeId], ingredient)
+		}
+		query = "Select recipeid, stepnumber, description  from step where True"
+		rows, err = tx.Query(query)
+		if err != nil {
+			resp <- ChanRecipesList{*recipes, err}
+			return
+		}
+		for rows.Next() {
+			step := new(entity.Step)
+			recipeId := 0
+			err := rows.Scan(&recipeId, &step.StepNumber, &step.Description)
+			if err != nil {
+				resp <- ChanRecipesList{*recipes, err}
+				return
+			}
+			StepsMap[recipeId] = append(StepsMap[recipeId], step)
+		}
+		query = "Select recipeid, name, title  from recipe where True"
+		rows, err = tx.Query(query)
+		if err != nil {
+			resp <- ChanRecipesList{*recipes, err}
+			return
+		}
+		for rows.Next() {
+			recipe := new(entity.Recipe)
+			err := rows.Scan(&recipe.RecipeId, &recipe.Name, &recipe.Title)
+			if err != nil {
+				resp <- ChanRecipesList{*recipes, err}
+				return
+			}
+			recipe.Ingredients = IngredientMap[recipe.RecipeId]
+			recipe.Steps = StepsMap[recipe.RecipeId]
+			recipes.Recipes = append(recipes.Recipes, *recipe)
+		}
+		resp <- ChanRecipesList{*recipes, err}
+		return
+	}()
+	for {
+		select {
+		case <-ct.Done():
+			return entity.RecipesList{}, errs.CtxError{}
+		case RecipeMessage := <-resp:
+			return RecipeMessage.RecipesList, RecipeMessage.err
+		}
+	}
 }
 
 // Get reads the recipe with the specified ID from the database.
@@ -117,7 +189,6 @@ func (r repository) Create(ctx context.Context, recipe entity.Recipe) (entity.Re
 			resp <- ChanRecipe{recipe, err}
 			return
 		}
-		fmt.Println("step2")
 		for _, v := range recipe.Ingredients {
 			query := "Insert into ingredient (recipeid, ingredient) values ($1, $2)"
 			rows, err := tx.Query(query, recipe.RecipeId, v.Name)
@@ -265,4 +336,8 @@ func (r repository) Delete(ctx context.Context, id int) error {
 type ChanRecipe struct {
 	Recipe entity.Recipe
 	err    error
+}
+type ChanRecipesList struct {
+	RecipesList entity.RecipesList
+	err         error
 }

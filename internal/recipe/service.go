@@ -128,14 +128,14 @@ func (s service) Update(ctx context.Context, id int, req UpdateRecipeRequest) (N
 		return NoContentRequestResponse{}, err
 	}
 	recipe.RecipeId = id
-	rec := entity.Recipe{
+	rc := entity.Recipe{
 		RecipeId:    id,
-		Name:        recipe.Name,
-		Title:       recipe.Title,
-		Ingredients: recipe.Ingredients,
-		Steps:       recipe.Steps,
+		Name:        req.Name,
+		Title:       req.Title,
+		Ingredients: req.Ingredients,
+		Steps:       req.Steps,
 	}
-	if err := s.repo.CreateWithId(ctx, rec); err != nil {
+	if err := s.repo.CreateWithId(ctx, rc); err != nil {
 		return NoContentRequestResponse{}, err
 	}
 	return NoContentRequestResponse{}, nil
