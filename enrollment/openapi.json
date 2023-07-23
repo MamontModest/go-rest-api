@@ -1,0 +1,330 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "recipe service",
+    "version": "1.0"
+  },
+  "paths": {
+    "/recipe": {
+    "get": {
+      "tags": [
+        "recipe_controller"
+      ],
+      "operationId": "getRecipes",
+      "responses": {
+        "200": {
+          "description": "ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+
+            }
+          }
+        },
+        "400": {
+          "description": "bad request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BadRequestResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": [
+        "recipe_controller"
+      ],
+      "operationId": "createRecipe",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateRecipeRequest"
+              }
+            }
+          },
+        "required": true
+        },
+      "responses": {
+        "200": {
+          "description": "ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "bad request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BadRequestResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+    },
+    "/recipe/{receip_id}": {
+      "get":{
+        "tags": [
+          "recipe_controller"
+        ],
+        "operationId": "getRecipe",
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "description": "Recipe identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "recipe_controller"
+        ],
+        "operationId": "deleteRecipe",
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "description": "Recipe identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "recipe delete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoContentRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "recipe_controller"
+        ],
+        "operationId": "updateRecipe",
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "description": "Recipe identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecipeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "recipe create",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRequestResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "recipe update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoContentRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Ingredient": {
+        "required":[
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      },
+      "Step": {
+        "required": [
+          "stepNumber",
+          "description"
+        ],
+        "properties": {
+          "stepNumber": {
+            "type": "number",
+            "format": "uint8"
+          },
+          "description": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      },
+      "Recipe":{
+        "type": "object",
+        "required": [
+          "recipe_id",
+          "title",
+          "ingredients",
+          "steps",
+          "name"
+        ],
+        "properties": {
+          "recipe_id": {
+            "type": "number",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string",
+            "format": "string"
+          },
+          "ingredients": {
+            "type": "array",
+            "items":{
+              "$ref": "#/components/schemas/Ingredient"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            }
+          },
+          "name":{
+            "type" : "string",
+            "format": "string"
+          }
+        }
+      },
+      "CreateRecipeRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "ingredients",
+          "steps",
+          "name"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "format": "string"
+          },
+          "ingredients": {
+            "type": "array",
+            "items":{
+              "$ref": "#/components/schemas/Ingredient"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            }
+          },
+          "name":{
+            "type" : "string",
+            "format": "string"
+          }
+        }
+      },
+      "BadRequestResponse": {
+        "type": "object"
+      },
+      "NoContentRequestResponse": {
+        "type": "object"
+      },
+      "CreateRequestResponse": {
+        "type": "object"
+      }
+    }
+  }
+}

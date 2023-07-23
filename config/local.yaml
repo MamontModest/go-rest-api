@@ -1,0 +1,1 @@
+dsn: "postgres://localhost/go_restful?sslmode=disable&user=postgres&password=QWertas1122"
