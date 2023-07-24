@@ -132,6 +132,9 @@ func (m filter) Validate() error {
 		return errors.New(fmt.Sprintf("Field SortTime not asc or desc : SortTime is %s", m.SortTime))
 	}
 	if m.TimeBetween != "" {
+		if len(strings.Split(m.TimeBetween, "")) != 2 {
+			errors.New(fmt.Sprintf("Field TimeBeetween not correct format : TimeBeetwen is %s", m.TimeBetween))
+		}
 		mass := strings.Split(m.TimeBetween, ":")
 		_, err := strconv.Atoi(mass[0])
 		if err != nil {

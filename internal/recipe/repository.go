@@ -3,11 +3,15 @@ package recipe
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/mamontmodest/go-rest-api/internal/entity"
 	"github.com/mamontmodest/go-rest-api/pkg/db"
 	errs "github.com/mamontmodest/go-rest-api/pkg/errors"
 	"github.com/mamontmodest/go-rest-api/pkg/log"
 	"hash/fnv"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -119,9 +123,15 @@ func (r repository) GetRecipes(ctx context.Context) (entity.RecipesList, error) 
 	}
 }
 
+type UpRecipe struct {
+	entity.Recipe
+	time int
+}
+
 // GetRecipesFilter returns the list of recipes with filter recordset in the database.
 func (r repository) GetRecipesFilter(ctx context.Context, filter entity.Filter) (entity.RecipesList, error) {
 	recipes := new(entity.RecipesList)
+	upRecipe := make([]UpRecipe, 0)
 	conn, err := r.db.ConnWith(ctx)
 	if err != nil {
 		return *recipes, err
@@ -130,6 +140,24 @@ func (r repository) GetRecipesFilter(ctx context.Context, filter entity.Filter) 
 	ct, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 	resp := make(chan ChanRecipesList)
+	flag1 := false
+	flag2 := false
+	flag3 := false
+	var t1, t2 int
+	if filter.TimeBetween != "" {
+		mass := strings.Split(filter.TimeBetween, "")
+		flag1 = true
+		t1, _ = strconv.Atoi(mass[0])
+		t2, _ = strconv.Atoi(mass[0])
+	}
+	if filter.SortTime != "" {
+		flag2 = true
+	}
+	if filter.Ingredients != nil {
+		flag3 = true
+	}
+	fmt.Println(flag3, flag2, flag1)
+	fmt.Println(filter)
 	go func() {
 		//select all tables and creates maps for data structs
 		IngredientMap := make(map[int][]*entity.Ingredient)
@@ -181,9 +209,54 @@ func (r repository) GetRecipesFilter(ctx context.Context, filter entity.Filter) 
 				resp <- ChanRecipesList{*recipes, err}
 				return
 			}
+			flag := true
+			sum := 0
+			if flag1 || flag2 {
+				for _, v := range StepsMap[recipe.RecipeId] {
+					sum += v.Time
+				}
+				if t1 > sum || sum < t2 {
+					flag = false
+				}
+			}
+			if flag3 && flag {
+				f := false
+				for _, v := range IngredientMap[recipe.RecipeId] {
+					for _, z := range filter.Ingredients {
+						if z.Name == v.Name {
+							f = true
+							break
+						}
+					}
+					flag = f
+					if f {
+						break
+					}
+				}
+			}
 			recipe.Ingredients = IngredientMap[recipe.RecipeId]
 			recipe.Steps = StepsMap[recipe.RecipeId]
-			recipes.Recipes = append(recipes.Recipes, *recipe)
+			if flag {
+				recipes.Recipes = append(recipes.Recipes, *recipe)
+				upRecipe = append(upRecipe, UpRecipe{*recipe, sum})
+			}
+		}
+		if flag2 {
+			sort.Slice(upRecipe, func(i, j int) bool {
+				return upRecipe[i].time > upRecipe[j].time
+			})
+			recipes.Recipes = make([]entity.Recipe, 0)
+			if filter.SortTime == "desc" {
+				for _, v := range upRecipe {
+					recipes.Recipes = append(recipes.Recipes, v.Recipe)
+				}
+			} else {
+				l := len(upRecipe)
+				for i, _ := range upRecipe {
+					recipes.Recipes = append(recipes.Recipes, upRecipe[l-1-i].Recipe)
+				}
+			}
+
 		}
 		resp <- ChanRecipesList{*recipes, err}
 		return

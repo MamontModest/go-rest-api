@@ -368,6 +368,7 @@
           },
           "ingredients": {
             "type": "array",
+            "description": "Ищет все рецепты , у которых >=1 ингредиент совпадает  ",
             "items":{
               "$ref": "#/components/schemas/Ingredient"
             }
