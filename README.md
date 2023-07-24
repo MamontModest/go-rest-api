@@ -13,7 +13,7 @@
 
 ## Для старта сервера 
 ### git clone https://github.com/MamontModest/go-rest-api
-### cd receipts
+### cd go-rest-api
 ### docker compose up
 
 
