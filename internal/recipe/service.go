@@ -14,6 +14,8 @@ type Service interface {
 	Create(ctx context.Context, input CreateRecipeRequest) (Recipe, error)
 	Update(ctx context.Context, id int, input UpdateRecipeRequest) (NoContentRequestResponse, error)
 	Delete(ctx context.Context, id int) (NoContentRequestResponse, error)
+	GetRecipesFilter(ctx context.Context, filter filter) (RecipesList, error)
+	Login(ctx context.Context, login, password string) error
 }
 
 // Recipe represents the data about a recipe.
@@ -87,7 +89,20 @@ func (s service) Get(ctx context.Context, id int) (Recipe, error) {
 	return Recipe{recipe}, nil
 }
 
-// GetRecipes returns the list of recipes .
+// GetRecipesFilter returns the list of recipes with filter .
+func (s service) GetRecipesFilter(ctx context.Context, filter filter) (RecipesList, error) {
+	f := entity.Filter{
+		TimeBetween: filter.TimeBetween,
+		SortTime:    filter.SortTime,
+		Ingredients: filter.Ingredients,
+	}
+	recipesList, err := s.repo.GetRecipesFilter(ctx, f)
+	if err != nil {
+		return RecipesList{recipesList}, err
+	}
+	return RecipesList{recipesList}, nil
+}
+
 func (s service) GetRecipes(ctx context.Context) (RecipesList, error) {
 	recipesList, err := s.repo.GetRecipes(ctx)
 	if err != nil {
@@ -151,4 +166,24 @@ func (s service) Delete(ctx context.Context, id int) (NoContentRequestResponse, 
 		return NoContentRequestResponse{}, err
 	}
 	return NoContentRequestResponse{}, nil
+}
+
+func (s service) Login(ctx context.Context, login, password string) error {
+	person := entity.Identity{
+		Login:    login,
+		Password: password,
+	}
+	err := s.repo.Login(ctx, person)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type Ingredient struct {
+	entity.Ingredient
+}
+
+type filter struct {
+	entity.Filter
 }

@@ -10,6 +10,18 @@
       "tags": [
         "recipe_controller"
       ],
+      "parameters": [
+        {
+          "name": "filter",
+          "in": "query",
+          "description": "json объект филтрации",
+          "required": false,
+          "schema": {
+            "$ref": "#/components/schemas/FilterObject"
+          },
+          "example": {"ingredients": [{"name":"Ботва"},{"name":"Морковь"}], "timeBetween": "200:12000", "sorTime": "asc" }
+        }
+      ],
       "operationId": "getRecipes",
       "responses": {
         "200": {
@@ -218,6 +230,56 @@
           }
         }
       }
+    },
+    "/auth": {
+      "post": {
+        "tags": [
+          "auth_controller"
+        ],
+        "operationId": "createUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User create",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRequestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -236,7 +298,8 @@
       "Step": {
         "required": [
           "stepNumber",
-          "description"
+          "description",
+          "time"
         ],
         "properties": {
           "stepNumber": {
@@ -246,6 +309,11 @@
           "description": {
             "type": "string",
             "format": "string"
+          },
+          "time": {
+            "type": "integer",
+            "description": "Время на приготовления шага в секундах",
+            "format": "integer"
           }
         }
       },
@@ -316,6 +384,19 @@
           }
         }
       },
+      "User": {
+        "type": "object",
+        "properties": {
+          "login": {
+            "type": "string",
+            "format": "string"
+          },
+          "password": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      },
       "BadRequestResponse": {
         "type": "object"
       },
@@ -324,6 +405,26 @@
       },
       "CreateRequestResponse": {
         "type": "object"
+      },
+      "FilterObject": {
+        "properties": {
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            }
+          },
+          "timeBetween": {
+            "type": "string",
+            "description": "Минимальное время приготовления : Максимальное время приготовления в секундах",
+            "format": "int:int"
+          },
+          "sortTime": {
+            "type": "string",
+            "description": "asc or desc",
+            "format": "string"
+          }
+        }
       }
     }
   }

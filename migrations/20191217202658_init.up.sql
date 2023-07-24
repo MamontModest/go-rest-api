@@ -1,3 +1,8 @@
+CREATE table users
+(
+    login varchar(63) primary key ,
+    password bigint
+);
 CREATE table recipe
 (
     recipeId serial primary key ,
@@ -15,5 +20,6 @@ create table step
     recipeId integer REFERENCES recipe (recipeId) ON DELETE CASCADE,
     stepNumber integer,
     description varchar(255),
+    timeDuration integer,
     primary key (recipeId, stepNumber)
 );
