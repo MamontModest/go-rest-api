@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	routing "github.com/go-ozzo/ozzo-routing/v2"
-	"log"
 	"net/http"
 )
 
@@ -18,7 +17,6 @@ func (r *resource) create(c *routing.Context) error {
 	}
 	err := r.service.CreateUser(c.Request.Context(), input.Login, input.Password)
 	if err != nil {
-		log.Println(err)
 		return c.WriteWithStatus(BadRequestResponse{}, http.StatusBadRequest)
 	}
 

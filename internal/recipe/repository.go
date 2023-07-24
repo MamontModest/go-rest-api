@@ -127,7 +127,7 @@ func (r repository) GetRecipesFilter(ctx context.Context, filter entity.Filter) 
 		return *recipes, err
 	}
 	defer conn.Close()
-	ct, cancel := context.WithTimeout(ctx, time.Second*1)
+	ct, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 	resp := make(chan ChanRecipesList)
 	go func() {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -19,7 +18,7 @@ import (
 
 var Version = "1.0.0"
 
-var dsn = "postgres://localhost/go_restful?sslmode=disable&user=postgres&password=QWertas1122"
+var dsn = "postgres://db/go_restful?sslmode=disable&user=postgres&password=postgres"
 
 func main() {
 	certFile := flag.String("certfile", "cert.pem", "certificate PEM file")
@@ -47,9 +46,6 @@ func main() {
 	hs := &http.Server{
 		Addr:    address,
 		Handler: buildHandler(&logger, database.NewSDatabase(dsn, "postgres")),
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS13,
-		},
 	}
 
 	// start the HTTP server with graceful shutdown

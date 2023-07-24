@@ -1,0 +1,1 @@
+migrate -database "${APP_DSN}" -path ./migrations up
